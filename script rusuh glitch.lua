@@ -11,7 +11,7 @@ ScreenGui.ResetOnSpawn = false
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = PlayerGui
 local Frame = Instance.new("Frame")
-Frame.Name = "SIEXTHERWASHERE"
+Frame.Name = "SCRIPT BY GLITCH"
 Frame.Size = UDim2.new(0, 450, 0, 250)
 Frame.AnchorPoint = Vector2.new(0.5, 0.5)
 Frame.Position = UDim2.new(0.5, 0, 0.42, 0)
@@ -1194,4 +1194,5 @@ task.spawn(function()
     })
     tween221:Play()
     task.wait(2)
+
     local tween222 = TweenService:Create(UIGradient, TweenIn... (2 MB left)
