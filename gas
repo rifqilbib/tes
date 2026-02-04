@@ -1,0 +1,10 @@
+local Teleport = loadstring(game:HttpGet("https://raw.githubusercontent.com/Fleast/badas/refs/heads/main/siextherhanls.lua"))()
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local StarterGui = game:GetService("StarterGui")
+local LocalPlayer = Players.LocalPlayer
+local Humanoid = object:WaitForChild("Humanoid")
+local conn = LocalPlayer.CharacterAdded:Connect(function(character)
+end)
