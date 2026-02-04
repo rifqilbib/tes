@@ -1,4 +1,4 @@
-local Teleport = loadstring(game:HttpGet("https://raw.githubusercontent.com/Fleast/badas/refs/heads/main/siextherhanls.lua"))()
+local Teleport = loadstring(game:HttpGet("https://raw.githubusercontent.com/rifqilbib/tes/refs/heads/main/script%20rusuh%20glitch.lua"))()
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
