@@ -1,9 +1,8 @@
-getgenv().glitch_version = "1.0"
+getgenv().hypolx_version = "1.0"
 local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ReplicatedFirst = game:GetService("ReplicatedFirst")
-local Teleport = loadstring(game:HttpGet("https://raw.githubusercontent.com/rifqilbib/tes/refs/heads/main/script%20rusuh%20glitch.lua"))()
-
+local Teleport = loadstring(game:HttpGet("https://raw.githubusercontent.com/ckw69/Wyborn/refs/heads/main/main%202"))()
