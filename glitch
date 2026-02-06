@@ -5,4 +5,4 @@
 ]]
 
 
-loadstring(game:HttpGet('https://raw.githubusercontent.com/Footagesus/WindUI/refs/heads/main/main.client.lua'))()
+loadstring(game:HttpGet('https://raw.githubusercontent.com/rifqilbib/tes/refs/heads/main/GlitchVipFree.lua'))()
