@@ -258,7 +258,7 @@ end
 -- */  About Tab  /* --
 do
     local AboutTab = Window:Tab({
-        Title = "About WindUI",
+        Title = "BUY VIP",
         Desc = "Description Example", 
         Icon = "solar:info-square-bold",
         IconColor = Grey,
