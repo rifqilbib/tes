@@ -1,0 +1,122 @@
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
+
+-- [[ KONFIGURASI ]] --
+local API_URL = "https://glitchmods.my.id/api/server.php"
+local GET_KEY_URL = "https://glitchmods.my.id/" 
+local SERVICE_NAME = "glitchtes"
+
+-- [[ UI LOADER ]] --
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 320, 0, 230)
+Main.Position = UDim2.new(0.5, -160, 0.5, -115)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "GLITCH SYSTEM AUTO-LOAD"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+local Input = Instance.new("TextBox", Main)
+Input.Size = UDim2.new(0.8, 0, 0, 40)
+Input.Position = UDim2.new(0.1, 0, 0.25, 0)
+Input.PlaceholderText = "Enter Key..."
+Input.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Input.TextColor3 = Color3.new(1, 1, 1)
+Instance.new("UICorner", Input)
+
+local Btn = Instance.new("TextButton", Main)
+Btn.Size = UDim2.new(0.8, 0, 0, 40)
+Btn.Position = UDim2.new(0.1, 0, 0.52, 0)
+Btn.Text = "LOGIN"
+Btn.BackgroundColor3 = Color3.fromRGB(80, 0, 255)
+Btn.TextColor3 = Color3.new(1, 1, 1)
+Btn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", Btn)
+
+local GetKeyBtn = Instance.new("TextButton", Main)
+GetKeyBtn.Size = UDim2.new(0.8, 0, 0, 40)
+GetKeyBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
+GetKeyBtn.Text = "GET KEY"
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+GetKeyBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+GetKeyBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", GetKeyBtn)
+
+-- [[ LOGIKA EKSEKUSI OTOMATIS ]] --
+local function ExecuteScript(source)
+    -- Mencoba berbagai macam fungsi loadstring yang didukung executor
+    local loader = loadstring or syn and syn.loadstring or (v3rm and v3rm.loadstring)
+    
+    if loader then
+        local success, result = pcall(function()
+            local func = loader(source)
+            if func then
+                task.spawn(func) -- Menjalankan di thread baru agar tidak memblokir UI
+                return true
+            end
+            return false
+        end)
+        
+        if success and result then
+            ScreenGui:Destroy()
+            return true
+        end
+    end
+    return false
+end
+
+-- [[ LOGIKA LOGIN ]] --
+Btn.MouseButton1Click:Connect(function()
+    local key = Input.Text
+    if key == "" then return end
+
+    Btn.Text = "Verifying..."
+    
+    local hwid = "Unknown"
+    pcall(function() hwid = game:GetService("RbxAnalyticsService"):GetClientId() end)
+
+    local requestURL = string.format("%s?key=%s&hwid=%s&service=%s", API_URL, key, hwid, SERVICE_NAME)
+
+    local success, response = pcall(function()
+        return game:HttpGet(requestURL)
+    end)
+
+    if success then
+        local data = HttpService:JSONDecode(response)
+
+        if data.status == "success" then
+            Btn.Text = "LOADING SCRIPT..."
+            
+            -- COBA JALANKAN OTOMATIS
+            local isLoaded = ExecuteScript(data.script)
+            
+            if not isLoaded then
+                -- JIKA TETAP DIBLOKIR OLEH XENO (Fallback Terakhir)
+                warn("AUTO-LOAD FAILED. TRYING CLIPBOARD.")
+                if setclipboard then
+                    setclipboard(data.script)
+                    Btn.Text = "BLOCKED! PASTE MANUAL"
+                    Btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+                end
+            end
+        else
+            Btn.Text = data.message or "Invalid Key"
+            task.wait(2)
+            Btn.Text = "LOGIN"
+        end
+    else
+        Btn.Text = "SERVER ERROR"
+    end
+end)
+
+GetKeyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then setclipboard(GET_KEY_URL) GetKeyBtn.Text = "COPIED!" task.wait(2) GetKeyBtn.Text = "GET KEY" end
+end)
