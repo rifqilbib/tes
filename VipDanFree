@@ -1,0 +1,134 @@
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local StarterGui = game:GetService("StarterGui")
+
+-- [[ KONFIGURASI ]] --
+local API_URL = "https://glitchmods.my.id/api/server.php"
+local GET_KEY_URL = "https://glitchmods.my.id/" -- GANTI DENGAN LINK GET KEY KAMU
+local SERVICE_NAME = "glitchtes"
+
+-- [[ UI LOADER ]] --
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+local Main = Instance.new("Frame", ScreenGui)
+Main.Size = UDim2.new(0, 320, 0, 230) -- Ukuran ditambah agar muat tombol baru
+Main.Position = UDim2.new(0.5, -160, 0.5, -115)
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+Main.BorderSizePixel = 0
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+
+local Title = Instance.new("TextLabel", Main)
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.Text = "GLITCH SYSTEM VERIFIER"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+local Input = Instance.new("TextBox", Main)
+Input.Size = UDim2.new(0.8, 0, 0, 40)
+Input.Position = UDim2.new(0.1, 0, 0.25, 0)
+Input.PlaceholderText = "Enter Key Here..."
+Input.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Input.TextColor3 = Color3.new(1, 1, 1)
+Input.Text = ""
+Instance.new("UICorner", Input)
+
+-- TOMBOL LOGIN
+local Btn = Instance.new("TextButton", Main)
+Btn.Size = UDim2.new(0.8, 0, 0, 40)
+Btn.Position = UDim2.new(0.1, 0, 0.52, 0)
+Btn.Text = "LOGIN"
+Btn.BackgroundColor3 = Color3.fromRGB(80, 0, 255)
+Btn.TextColor3 = Color3.new(1, 1, 1)
+Btn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", Btn)
+
+-- TOMBOL GET KEY
+local GetKeyBtn = Instance.new("TextButton", Main)
+GetKeyBtn.Size = UDim2.new(0.8, 0, 0, 40)
+GetKeyBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
+GetKeyBtn.Text = "GET KEY"
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+GetKeyBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
+GetKeyBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", GetKeyBtn)
+
+-- [[ FUNGSI NOTIFIKASI ]] --
+local function Notify(title, text)
+    StarterGui:SetCore("SendNotification", {
+        Title = title,
+        Text = text,
+        Duration = 8
+    })
+end
+
+-- [[ LOGIKA GET KEY ]] --
+GetKeyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(GET_KEY_URL)
+        GetKeyBtn.Text = "LINK COPIED!"
+        Notify("System", "Link Get Key sudah disalin ke clipboard!")
+        task.wait(2)
+        GetKeyBtn.Text = "GET KEY"
+    else
+        Notify("Error", "Executor kamu tidak mendukung Copy Clipboard.")
+    end
+end)
+
+-- [[ LOGIKA LOGIN ]] --
+Btn.MouseButton1Click:Connect(function()
+    local key = Input.Text
+    if key == "" then 
+        Btn.Text = "EMPTY KEY!" 
+        task.wait(2)
+        Btn.Text = "LOGIN"
+        return 
+    end
+
+    Btn.Text = "Authenticating..."
+    
+    local hwid = "Unknown"
+    pcall(function() hwid = game:GetService("RbxAnalyticsService"):GetClientId() end)
+
+    local requestURL = string.format("%s?key=%s&hwid=%s&service=%s", API_URL, key, hwid, SERVICE_NAME)
+
+    local success, response = pcall(function()
+        return game:HttpGet(requestURL)
+    end)
+
+    if success then
+        local data = HttpService:JSONDecode(response)
+
+        if data.status == "success" then
+            Btn.Text = "SUCCESS!"
+            Btn.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+            
+            local function Execute(src)
+                local func, err = loadstring(src)
+                if func then
+                    task.spawn(func)
+                    ScreenGui:Destroy()
+                    Notify("Welcome", "Access Granted!")
+                else
+                    warn("XENO BLOCKED LOADSTRING!")
+                    if setclipboard then
+                        setclipboard(tostring(src))
+                        Btn.Text = "COPIED! PASTE MANUAL"
+                        Btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+                        Notify("Xeno Protected", "Paste script ke tab baru!")
+                    end
+                end
+            end
+            Execute(data.script)
+        else
+            Btn.Text = data.message or "Invalid Key"
+            Btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
+            task.wait(2)
+            Btn.Text = "LOGIN"
+            Btn.BackgroundColor3 = Color3.fromRGB(80, 0, 255)
+        end
+    else
+        Btn.Text = "CONN ERROR"
+        Notify("Error", "Gagal menghubungi server.")
+    end
+end)
