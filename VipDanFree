@@ -2,7 +2,7 @@ local HttpService = game:GetService("HttpService")
 local TweenService = game:GetService("TweenService")
 
 -- [[ KONFIGURASI ]] --
-local API_URL = https://glitchmods.my.id/api/server.php" 
+local API_URL = "https://glitchmods.my.id/api/server.php" 
 local GET_KEY_LINK = "https://link-get-key-anda.com" -- GANTI DENGAN LINK ANDA
 local SERVICE_NAME = "glitchtes"
 
