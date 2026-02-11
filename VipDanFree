@@ -1,0 +1,149 @@
+local HttpService = game:GetService("HttpService")
+local CoreGui = game:GetService("CoreGui")
+local TweenService = game:GetService("TweenService")
+
+-- [[ KONFIGURASI ]] --
+local API_URL = "https://glitchmods.my.id/api/server.php" 
+local GET_KEY_LINK = "https://glitchmodsvip.servequake.com/Panel_Roblox/get_key-free/"
+local SERVICE_NAME = "glitchtes"
+
+-- [[ CREATE UI ]] --
+local ScreenGui = Instance.new("ScreenGui", CoreGui)
+ScreenGui.Name = "GlitchSystem_V3"
+
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 320, 0, 250)
+MainFrame.Position = UDim2.new(0.5, -160, 0.5, -125)
+MainFrame.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+MainFrame.BorderSizePixel = 0
+local Corner = Instance.new("UICorner", MainFrame)
+Corner.CornerRadius = UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel", MainFrame)
+Title.Text = "GLITCH MODS SYSTEM"
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 16
+
+local KeyInput = Instance.new("TextBox", MainFrame)
+KeyInput.Size = UDim2.new(0.85, 0, 0, 45)
+KeyInput.Position = UDim2.new(0.075, 0, 0.25, 0)
+KeyInput.PlaceholderText = "Paste Key Here..."
+KeyInput.Text = ""
+KeyInput.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+KeyInput.TextColor3 = Color3.new(1, 1, 1)
+KeyInput.Font = Enum.Font.Gotham
+KeyInput.TextSize = 14
+Instance.new("UICorner", KeyInput).CornerRadius = UDim.new(0, 8)
+
+local SubmitBtn = Instance.new("TextButton", MainFrame)
+SubmitBtn.Size = UDim2.new(0.85, 0, 0, 45)
+SubmitBtn.Position = UDim2.new(0.075, 0, 0.5, 0)
+SubmitBtn.Text = "VERIFY ACCESS"
+SubmitBtn.BackgroundColor3 = Color3.fromRGB(100, 0, 255)
+SubmitBtn.TextColor3 = Color3.new(1, 1, 1)
+SubmitBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", SubmitBtn).CornerRadius = UDim.new(0, 8)
+
+local GetKeyBtn = Instance.new("TextButton", MainFrame)
+GetKeyBtn.Size = UDim2.new(0.85, 0, 0, 40)
+GetKeyBtn.Position = UDim2.new(0.075, 0, 0.75, 0)
+GetKeyBtn.Text = "GET KEY (COPY LINK)"
+GetKeyBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+GetKeyBtn.TextColor3 = Color3.new(1, 1, 1)
+GetKeyBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", GetKeyBtn).CornerRadius = UDim.new(0, 8)
+
+-- [[ LOGIC ]] --
+
+-- Fungsi Get Key
+GetKeyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(GET_KEY_LINK)
+        GetKeyBtn.Text = "LINK COPIED!"
+        task.wait(2)
+        GetKeyBtn.Text = "GET KEY (COPY LINK)"
+    else
+        GetKeyBtn.Text = "GET KEY (LINK IN F9)"
+        print("Link: " .. GET_KEY_LINK)
+    end
+end)
+
+-- Fungsi Verifikasi
+SubmitBtn.MouseButton1Click:Connect(function()
+    local enteredKey = KeyInput.Text
+    if enteredKey == "" then 
+        SubmitBtn.Text = "ENTER KEY FIRST!"
+        task.wait(2)
+        SubmitBtn.Text = "VERIFY ACCESS"
+        return 
+    end
+    
+    SubmitBtn.Text = "VERIFYING..."
+    
+    -- Ambil HWID (Pcall untuk keamanan)
+    local hwid = "Unknown"
+    pcall(function()
+        hwid = game:GetService("RbxAnalyticsService"):GetClientId()
+    end)
+    
+    -- DATA HARUS DI-TOSTRING AGAR TIDAK KOSONG
+    local data = {
+        ["key"] = tostring(enteredKey),
+        ["hwid"] = tostring(hwid),
+        ["service"] = tostring(SERVICE_NAME)
+    }
+
+    -- ENCODE DATA KE JSON
+    local payload = HttpService:JSONEncode(data)
+
+    local success, response = pcall(function()
+        return HttpService:PostAsync(
+            API_URL, 
+            payload, 
+            Enum.HttpContentType.ApplicationJson
+        )
+    end)
+
+    if success then
+        local res = HttpService:JSONDecode(response)
+        
+        if res.status == "success" then
+            SubmitBtn.Text = "ACCESS GRANTED!"
+            task.wait(1)
+            ScreenGui:Destroy()
+            
+            -- PROTEKSI LOADSTRING (ANTI-BLOCKED)
+            local function RunScript(src)
+                local func, err = loadstring(src)
+                if func then
+                    func()
+                else
+                    -- JIKA BLOCKED: COPY KE CLIPBOARD
+                    warn("LOADSTRING BLOCKED! COPYING SCRIPT TO CLIPBOARD...")
+                    if setclipboard then
+                        setclipboard(src)
+                        game:GetService("StarterGui"):SetCore("SendNotification", {
+                            Title = "Blocked!",
+                            Text = "Executor blocked loadstring. Script copied! Paste manual.",
+                            Duration = 10
+                        })
+                    end
+                end
+            end
+            
+            RunScript(res.script)
+        else
+            SubmitBtn.Text = res.message or "Invalid Key!"
+            task.wait(2)
+            SubmitBtn.Text = "VERIFY ACCESS"
+        end
+    else
+        warn("Connection Error: " .. tostring(response))
+        SubmitBtn.Text = "SERVER ERROR!"
+        task.wait(2)
+        SubmitBtn.Text = "VERIFY ACCESS"
+    end
+end)
