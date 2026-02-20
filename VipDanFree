@@ -14,7 +14,6 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "GlitchSystem_Premium"
 ScreenGui.ResetOnSpawn = false
 
--- Mencoba menempatkan UI di tempat yang paling aman sesuai executor
 local function ProtectUI()
     local success, _ = pcall(function()
         local CoreGui = game:GetService("CoreGui")
@@ -31,7 +30,7 @@ local Main = Instance.new("Frame", ScreenGui)
 Main.Name = "MainFrame"
 Main.AnchorPoint = Vector2.new(0.5, 0.5)
 Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-Main.Size = UDim2.new(0, 0, 0, 0) -- Animasi mulai dari nol
+Main.Size = UDim2.new(0, 0, 0, 0)
 Main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
@@ -42,7 +41,7 @@ UIStroke.Color = Color3.fromRGB(90, 0, 255)
 UIStroke.Thickness = 2
 UIStroke.Transparency = 0.4
 
--- [[ DRAGGING SYSTEM (Agar bisa digeser) ]] --
+-- [[ DRAGGING SYSTEM ]] --
 local UserInputService = game:GetService("UserInputService")
 local dragging, dragInput, dragStart, startPos
 Main.InputBegan:Connect(function(input)
@@ -99,10 +98,9 @@ GetKeyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
 GetKeyBtn.Font = Enum.Font.Gotham
 GetKeyBtn.TextSize = 12
 
--- [[ NOTIFIKASI DI BAWAH FRAME ]] --
 local Notify = Instance.new("TextLabel", Main)
 Notify.Size = UDim2.new(1, 0, 0, 30)
-Notify.Position = UDim2.new(0, 0, 1, 10) -- Sembunyi di bawah
+Notify.Position = UDim2.new(0, 0, 1, 10)
 Notify.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
 Notify.BackgroundTransparency = 0.1
 Notify.TextColor3 = Color3.new(1, 1, 1)
@@ -117,12 +115,10 @@ local function ShowNotify(msg)
     end)
 end
 
--- [[ TRANSISI ANIMASI SETELAH LOGIN ]] --
-local function LaunchAnimation(scriptData)
-    -- Hapus Konten Login
+-- [[ TRANSISI ANIMASI & PENGIRIMAN ROLE ]] --
+local function LaunchAnimation(scriptData, userRole)
     TweenService:Create(LoginFrame, TweenInfo.new(0.5), {Position = UDim2.new(0, 0, -1, 0)}):Play()
     
-    -- Loading Bar Modern
     local BarBG = Instance.new("Frame", Main)
     BarBG.Size = UDim2.new(0.7, 0, 0, 3)
     BarBG.Position = UDim2.new(0.15, 0, 0.5, 0)
@@ -143,13 +139,14 @@ local function LaunchAnimation(scriptData)
     TweenService:Create(BarFill, TweenInfo.new(2), {Size = UDim2.new(1, 0, 1, 0)}):Play()
     task.wait(2.2)
 
-    -- Ekspansi Frame ke arah Premium Link
     TweenService:Create(Main, TweenInfo.new(0.8, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 450, 0, 300)}):Play()
     BarBG:Destroy()
     StatusText.TextSize = 18
     StatusText.Text = "WELCOME TO GLITCH PREMIUM"
     
-    -- Jalankan Script
+    -- SINKRONISASI ROLE KE PANEL
+    _G.UserRole = userRole or "FREE"
+    
     local loader = loadstring or syn and syn.loadstring
     if loader then task.spawn(loader(scriptData)) end
     
@@ -157,25 +154,22 @@ local function LaunchAnimation(scriptData)
     ScreenGui:Destroy()
 end
 
--- [[ BUTTON LOGIC ]] --
+-- [[ LOGIN LOGIC ]] --
 LoginBtn.MouseButton1Click:Connect(function()
     local key = InputKey.Text
     if key == "" then ShowNotify("⚠ Key cannot be empty!") return end
-
     LoginBtn.Text = "VERIFYING..."
     
-    -- Ambil HWID dengan aman
     local hwid = "Unknown"
     pcall(function() hwid = game:GetService("RbxAnalyticsService"):GetClientId() end)
     
     local url = API_URL .. "?key=" .. key .. "&hwid=" .. hwid .. "&service=" .. SERVICE_NAME
-
     local success, response = pcall(function() return game:HttpGet(url) end)
 
     if success then
         local data = HttpService:JSONDecode(response)
         if data.status == "success" then
-            LaunchAnimation(data.script)
+            LaunchAnimation(data.script, data.role)
         else
             LoginBtn.Text = "AUTHENTICATE"
             ShowNotify("✕ " .. (data.message or "Invalid Key"))
@@ -190,5 +184,4 @@ GetKeyBtn.MouseButton1Click:Connect(function()
     if setclipboard then setclipboard(GET_KEY_URL) ShowNotify("✓ Link copied to clipboard!") end
 end)
 
--- [[ START INTRO ]] --
 TweenService:Create(Main, TweenInfo.new(0.8, Enum.EasingStyle.Back), {Size = UDim2.new(0, 330, 0, 250)}):Play()
