@@ -1,122 +1,194 @@
 local HttpService = game:GetService("HttpService")
-local CoreGui = game:GetService("CoreGui")
-local StarterGui = game:GetService("StarterGui")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
 -- [[ KONFIGURASI ]] --
 local API_URL = "https://glitchmods.my.id/api/server.php"
-local GET_KEY_URL = "https://glitchmods.my.id/" 
+local GET_KEY_URL = "https://glitchmods.my.id/"
 local SERVICE_NAME = "glitchtes"
 
--- [[ UI LOADER ]] --
-local ScreenGui = Instance.new("ScreenGui", CoreGui)
-local Main = Instance.new("Frame", ScreenGui)
-Main.Size = UDim2.new(0, 320, 0, 230)
-Main.Position = UDim2.new(0.5, -160, 0.5, -115)
-Main.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
-Main.BorderSizePixel = 0
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 10)
+-- [[ PENANGANAN UI (PARENTING) ]] --
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "GlitchSystem_Premium"
+ScreenGui.ResetOnSpawn = false
 
-local Title = Instance.new("TextLabel", Main)
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.Text = "GLITCH SYSTEM AUTO-LOAD"
-Title.TextColor3 = Color3.new(1, 1, 1)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.GothamBold
-Title.TextSize = 16
-
-local Input = Instance.new("TextBox", Main)
-Input.Size = UDim2.new(0.8, 0, 0, 40)
-Input.Position = UDim2.new(0.1, 0, 0.25, 0)
-Input.PlaceholderText = "Enter Key..."
-Input.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-Input.TextColor3 = Color3.new(1, 1, 1)
-Instance.new("UICorner", Input)
-
-local Btn = Instance.new("TextButton", Main)
-Btn.Size = UDim2.new(0.8, 0, 0, 40)
-Btn.Position = UDim2.new(0.1, 0, 0.52, 0)
-Btn.Text = "LOGIN"
-Btn.BackgroundColor3 = Color3.fromRGB(80, 0, 255)
-Btn.TextColor3 = Color3.new(1, 1, 1)
-Btn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", Btn)
-
-local GetKeyBtn = Instance.new("TextButton", Main)
-GetKeyBtn.Size = UDim2.new(0.8, 0, 0, 40)
-GetKeyBtn.Position = UDim2.new(0.1, 0, 0.75, 0)
-GetKeyBtn.Text = "GET KEY"
-GetKeyBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-GetKeyBtn.TextColor3 = Color3.new(0.8, 0.8, 0.8)
-GetKeyBtn.Font = Enum.Font.GothamBold
-Instance.new("UICorner", GetKeyBtn)
-
--- [[ LOGIKA EKSEKUSI OTOMATIS ]] --
-local function ExecuteScript(source)
-    -- Mencoba berbagai macam fungsi loadstring yang didukung executor
-    local loader = loadstring or syn and syn.loadstring or (v3rm and v3rm.loadstring)
-    
-    if loader then
-        local success, result = pcall(function()
-            local func = loader(source)
-            if func then
-                task.spawn(func) -- Menjalankan di thread baru agar tidak memblokir UI
-                return true
-            end
-            return false
-        end)
-        
-        if success and result then
-            ScreenGui:Destroy()
-            return true
-        end
+-- Mencoba menempatkan UI di tempat yang paling aman sesuai executor
+local function ProtectUI()
+    local success, _ = pcall(function()
+        local CoreGui = game:GetService("CoreGui")
+        ScreenGui.Parent = CoreGui
+    end)
+    if not success then
+        ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     end
-    return false
+end
+ProtectUI()
+
+-- [[ CONTAINER UTAMA ]] --
+local Main = Instance.new("Frame", ScreenGui)
+Main.Name = "MainFrame"
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+Main.Size = UDim2.new(0, 0, 0, 0) -- Animasi mulai dari nol
+Main.BackgroundColor3 = Color3.fromRGB(15, 15, 18)
+Main.BorderSizePixel = 0
+Main.ClipsDescendants = true
+Instance.new("UICorner", Main).CornerRadius = UDim.new(0, 12)
+
+local UIStroke = Instance.new("UIStroke", Main)
+UIStroke.Color = Color3.fromRGB(90, 0, 255)
+UIStroke.Thickness = 2
+UIStroke.Transparency = 0.4
+
+-- [[ DRAGGING SYSTEM (Agar bisa digeser) ]] --
+local UserInputService = game:GetService("UserInputService")
+local dragging, dragInput, dragStart, startPos
+Main.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true; dragStart = input.Position; startPos = Main.Position
+        input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+    end
+end)
+Main.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end)
+UserInputService.InputChanged:Connect(function(input)
+    if input == dragInput and dragging then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- [[ ELEMENT LOGIN ]] --
+local LoginFrame = Instance.new("Frame", Main)
+LoginFrame.Size = UDim2.new(1, 0, 1, 0)
+LoginFrame.BackgroundTransparency = 1
+
+local Title = Instance.new("TextLabel", LoginFrame)
+Title.Size = UDim2.new(1, 0, 0, 60)
+Title.Text = "GLITCH PREMIUM"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.Font = Enum.Font.GothamBold
+Title.TextSize = 22
+Title.BackgroundTransparency = 1
+
+local InputKey = Instance.new("TextBox", LoginFrame)
+InputKey.Size = UDim2.new(0.8, 0, 0, 45)
+InputKey.Position = UDim2.new(0.1, 0, 0.35, 0)
+InputKey.PlaceholderText = "Paste License Key..."
+InputKey.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+InputKey.TextColor3 = Color3.new(1, 1, 1)
+InputKey.Font = Enum.Font.Gotham
+Instance.new("UICorner", InputKey)
+
+local LoginBtn = Instance.new("TextButton", LoginFrame)
+LoginBtn.Size = UDim2.new(0.8, 0, 0, 45)
+LoginBtn.Position = UDim2.new(0.1, 0, 0.58, 0)
+LoginBtn.Text = "AUTHENTICATE"
+LoginBtn.BackgroundColor3 = Color3.fromRGB(90, 0, 255)
+LoginBtn.TextColor3 = Color3.new(1, 1, 1)
+LoginBtn.Font = Enum.Font.GothamBold
+Instance.new("UICorner", LoginBtn)
+
+local GetKeyBtn = Instance.new("TextButton", LoginFrame)
+GetKeyBtn.Size = UDim2.new(1, 0, 0, 30)
+GetKeyBtn.Position = UDim2.new(0, 0, 0.82, 0)
+GetKeyBtn.Text = "Don't have a key? Click here"
+GetKeyBtn.BackgroundTransparency = 1
+GetKeyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
+GetKeyBtn.Font = Enum.Font.Gotham
+GetKeyBtn.TextSize = 12
+
+-- [[ NOTIFIKASI DI BAWAH FRAME ]] --
+local Notify = Instance.new("TextLabel", Main)
+Notify.Size = UDim2.new(1, 0, 0, 30)
+Notify.Position = UDim2.new(0, 0, 1, 10) -- Sembunyi di bawah
+Notify.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
+Notify.BackgroundTransparency = 0.1
+Notify.TextColor3 = Color3.new(1, 1, 1)
+Notify.Font = Enum.Font.GothamMedium
+Notify.TextSize = 12
+
+local function ShowNotify(msg)
+    Notify.Text = msg
+    TweenService:Create(Notify, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0, 0, 0.9, 0)}):Play()
+    task.delay(3, function()
+        TweenService:Create(Notify, TweenInfo.new(0.5), {Position = UDim2.new(0, 0, 1, 10)}):Play()
+    end)
 end
 
--- [[ LOGIKA LOGIN ]] --
-Btn.MouseButton1Click:Connect(function()
-    local key = Input.Text
-    if key == "" then return end
-
-    Btn.Text = "Verifying..."
+-- [[ TRANSISI ANIMASI SETELAH LOGIN ]] --
+local function LaunchAnimation(scriptData)
+    -- Hapus Konten Login
+    TweenService:Create(LoginFrame, TweenInfo.new(0.5), {Position = UDim2.new(0, 0, -1, 0)}):Play()
     
+    -- Loading Bar Modern
+    local BarBG = Instance.new("Frame", Main)
+    BarBG.Size = UDim2.new(0.7, 0, 0, 3)
+    BarBG.Position = UDim2.new(0.15, 0, 0.5, 0)
+    BarBG.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+    
+    local BarFill = Instance.new("Frame", BarBG)
+    BarFill.Size = UDim2.new(0, 0, 1, 0)
+    BarFill.BackgroundColor3 = Color3.fromRGB(90, 0, 255)
+    
+    local StatusText = Instance.new("TextLabel", Main)
+    StatusText.Text = "LOADING PREMIUM MODULES..."
+    StatusText.Position = UDim2.new(0, 0, 0.4, 0)
+    StatusText.Size = UDim2.new(1, 0, 0, 20)
+    StatusText.TextColor3 = Color3.new(1,1,1)
+    StatusText.BackgroundTransparency = 1
+    StatusText.Font = Enum.Font.GothamMedium
+
+    TweenService:Create(BarFill, TweenInfo.new(2), {Size = UDim2.new(1, 0, 1, 0)}):Play()
+    task.wait(2.2)
+
+    -- Ekspansi Frame ke arah Premium Link
+    TweenService:Create(Main, TweenInfo.new(0.8, Enum.EasingStyle.Quart), {Size = UDim2.new(0, 450, 0, 300)}):Play()
+    BarBG:Destroy()
+    StatusText.TextSize = 18
+    StatusText.Text = "WELCOME TO GLITCH PREMIUM"
+    
+    -- Jalankan Script
+    local loader = loadstring or syn and syn.loadstring
+    if loader then task.spawn(loader(scriptData)) end
+    
+    task.wait(2)
+    ScreenGui:Destroy()
+end
+
+-- [[ BUTTON LOGIC ]] --
+LoginBtn.MouseButton1Click:Connect(function()
+    local key = InputKey.Text
+    if key == "" then ShowNotify("⚠ Key cannot be empty!") return end
+
+    LoginBtn.Text = "VERIFYING..."
+    
+    -- Ambil HWID dengan aman
     local hwid = "Unknown"
     pcall(function() hwid = game:GetService("RbxAnalyticsService"):GetClientId() end)
+    
+    local url = API_URL .. "?key=" .. key .. "&hwid=" .. hwid .. "&service=" .. SERVICE_NAME
 
-    local requestURL = string.format("%s?key=%s&hwid=%s&service=%s", API_URL, key, hwid, SERVICE_NAME)
-
-    local success, response = pcall(function()
-        return game:HttpGet(requestURL)
-    end)
+    local success, response = pcall(function() return game:HttpGet(url) end)
 
     if success then
         local data = HttpService:JSONDecode(response)
-
         if data.status == "success" then
-            Btn.Text = "LOADING SCRIPT..."
-            
-            -- COBA JALANKAN OTOMATIS
-            local isLoaded = ExecuteScript(data.script)
-            
-            if not isLoaded then
-                -- JIKA TETAP DIBLOKIR OLEH XENO (Fallback Terakhir)
-                warn("AUTO-LOAD FAILED. TRYING CLIPBOARD.")
-                if setclipboard then
-                    setclipboard(data.script)
-                    Btn.Text = "BLOCKED! PASTE MANUAL"
-                    Btn.BackgroundColor3 = Color3.fromRGB(200, 0, 0)
-                end
-            end
+            LaunchAnimation(data.script)
         else
-            Btn.Text = data.message or "Invalid Key"
-            task.wait(2)
-            Btn.Text = "LOGIN"
+            LoginBtn.Text = "AUTHENTICATE"
+            ShowNotify("✕ " .. (data.message or "Invalid Key"))
         end
     else
-        Btn.Text = "SERVER ERROR"
+        LoginBtn.Text = "AUTHENTICATE"
+        ShowNotify("✕ Connection Error")
     end
 end)
 
 GetKeyBtn.MouseButton1Click:Connect(function()
-    if setclipboard then setclipboard(GET_KEY_URL) GetKeyBtn.Text = "COPIED!" task.wait(2) GetKeyBtn.Text = "GET KEY" end
+    if setclipboard then setclipboard(GET_KEY_URL) ShowNotify("✓ Link copied to clipboard!") end
 end)
+
+-- [[ START INTRO ]] --
+TweenService:Create(Main, TweenInfo.new(0.8, Enum.EasingStyle.Back), {Size = UDim2.new(0, 330, 0, 250)}):Play()
