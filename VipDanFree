@@ -7,7 +7,7 @@ local LocalPlayer = Players.LocalPlayer
 -- [[ KONFIGURASI ]] --
 local API_URL = "https://glitchmods.my.id/api/server.php"
 local GET_KEY_URL = "https://glitchmods.my.id/"
-local SERVICE_NAME = "glitchtes"
+local SERVICE_NAME = "glitchv1"
 
 -- [[ PENANGANAN UI (PARENTING) ]] --
 local ScreenGui = Instance.new("ScreenGui")
@@ -115,8 +115,8 @@ local function ShowNotify(msg)
     end)
 end
 
--- [[ TRANSISI ANIMASI & PENGIRIMAN ROLE ]] --
-local function LaunchAnimation(scriptData, userRole)
+-- [[ TRANSISI ANIMASI & PENGIRIMAN DATA ]] --
+local function LaunchAnimation(scriptData, userData)
     TweenService:Create(LoginFrame, TweenInfo.new(0.5), {Position = UDim2.new(0, 0, -1, 0)}):Play()
     
     local BarBG = Instance.new("Frame", Main)
@@ -144,8 +144,11 @@ local function LaunchAnimation(scriptData, userRole)
     StatusText.TextSize = 18
     StatusText.Text = "WELCOME TO GLITCH PREMIUM"
     
-    -- SINKRONISASI ROLE KE PANEL
-    _G.UserRole = userRole or "FREE"
+    -- SINKRONISASI KE GLOBAL (Agar dibaca Script Utama)
+    _G.UserName = userData.username or "User"
+    _G.UserRole = userData.role or "FREE"
+    _G.Expiry = userData.expiry or "Unlimited"
+    _G.UserKey = userData.key
     
     local loader = loadstring or syn and syn.loadstring
     if loader then task.spawn(loader(scriptData)) end
@@ -169,7 +172,12 @@ LoginBtn.MouseButton1Click:Connect(function()
     if success then
         local data = HttpService:JSONDecode(response)
         if data.status == "success" then
-            LaunchAnimation(data.script, data.role)
+            LaunchAnimation(data.script, {
+                username = data.username,
+                role = data.role,
+                expiry = data.expiry,
+                key = key
+            })
         else
             LoginBtn.Text = "AUTHENTICATE"
             ShowNotify("✕ " .. (data.message or "Invalid Key"))
