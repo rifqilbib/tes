@@ -8,6 +8,7 @@ local LocalPlayer = Players.LocalPlayer
 local API_URL = "https://glitchmods.my.id/api/server.php"
 local GET_KEY_URL = "https://glitchmods.my.id/"
 local SERVICE_NAME = "glitchv1"
+local SAVE_FILE = "GlitchKey_Config.txt" -- Nama file simpanan
 
 -- [[ PENANGANAN UI (PARENTING) ]] --
 local ScreenGui = Instance.new("ScreenGui")
@@ -73,17 +74,38 @@ Title.BackgroundTransparency = 1
 
 local InputKey = Instance.new("TextBox", LoginFrame)
 InputKey.Size = UDim2.new(0.8, 0, 0, 45)
-InputKey.Position = UDim2.new(0.1, 0, 0.35, 0)
+InputKey.Position = UDim2.new(0.1, 0, 0.30, 0) -- Sedikit naik untuk ruang tombol baru
 InputKey.PlaceholderText = "Paste License Key..."
 InputKey.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
 InputKey.TextColor3 = Color3.new(1, 1, 1)
 InputKey.Font = Enum.Font.Gotham
 Instance.new("UICorner", InputKey)
 
+-- [[ TOMBOL TAMBAHAN (PASTE & LOAD) ]] --
+local PasteBtn = Instance.new("TextButton", LoginFrame)
+PasteBtn.Size = UDim2.new(0.38, 0, 0, 25)
+PasteBtn.Position = UDim2.new(0.1, 0, 0.50, 0)
+PasteBtn.Text = "PASTE"
+PasteBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+PasteBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+PasteBtn.Font = Enum.Font.GothamMedium
+PasteBtn.TextSize = 11
+Instance.new("UICorner", PasteBtn)
+
+local LoadBtn = Instance.new("TextButton", LoginFrame)
+LoadBtn.Size = UDim2.new(0.38, 0, 0, 25)
+LoadBtn.Position = UDim2.new(0.52, 0, 0.50, 0)
+LoadBtn.Text = "LOAD SAVED KEY"
+LoadBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+LoadBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+LoadBtn.Font = Enum.Font.GothamMedium
+LoadBtn.TextSize = 11
+Instance.new("UICorner", LoadBtn)
+
 local LoginBtn = Instance.new("TextButton", LoginFrame)
-LoginBtn.Size = UDim2.new(0.8, 0, 0, 45)
-LoginBtn.Position = UDim2.new(0.1, 0, 0.58, 0)
-LoginBtn.Text = "AUTHENTICATE"
+LoginBtn.Size = UDim2.new(0.8, 0, 0, 40)
+LoginBtn.Position = UDim2.new(0.1, 0, 0.65, 0)
+LoginBtn.Text = "LOGIN"
 LoginBtn.BackgroundColor3 = Color3.fromRGB(90, 0, 255)
 LoginBtn.TextColor3 = Color3.new(1, 1, 1)
 LoginBtn.Font = Enum.Font.GothamBold
@@ -91,7 +113,7 @@ Instance.new("UICorner", LoginBtn)
 
 local GetKeyBtn = Instance.new("TextButton", LoginFrame)
 GetKeyBtn.Size = UDim2.new(1, 0, 0, 30)
-GetKeyBtn.Position = UDim2.new(0, 0, 0.82, 0)
+GetKeyBtn.Position = UDim2.new(0, 0, 0.85, 0)
 GetKeyBtn.Text = "Don't have a key? Click here"
 GetKeyBtn.BackgroundTransparency = 1
 GetKeyBtn.TextColor3 = Color3.fromRGB(180, 180, 180)
@@ -107,12 +129,27 @@ Notify.TextColor3 = Color3.new(1, 1, 1)
 Notify.Font = Enum.Font.GothamMedium
 Notify.TextSize = 12
 
-local function ShowNotify(msg)
+local function ShowNotify(msg, color)
     Notify.Text = msg
+    Notify.BackgroundColor3 = color or Color3.fromRGB(255, 50, 50)
     TweenService:Create(Notify, TweenInfo.new(0.5, Enum.EasingStyle.Back), {Position = UDim2.new(0, 0, 0.9, 0)}):Play()
     task.delay(3, function()
         TweenService:Create(Notify, TweenInfo.new(0.5), {Position = UDim2.new(0, 0, 1, 10)}):Play()
     end)
+end
+
+-- [[ FITUR SAVE/LOAD ]] --
+local function SaveKey(key)
+    if writefile then
+        writefile(SAVE_FILE, key)
+    end
+end
+
+local function LoadKey()
+    if isfile and isfile(SAVE_FILE) then
+        return readfile(SAVE_FILE)
+    end
+    return nil
 end
 
 -- [[ TRANSISI ANIMASI & PENGIRIMAN DATA ]] --
@@ -144,14 +181,16 @@ local function LaunchAnimation(scriptData, userData)
     StatusText.TextSize = 18
     StatusText.Text = "WELCOME TO GLITCH PREMIUM"
     
-    -- SINKRONISASI KE GLOBAL (Agar dibaca Script Utama)
     _G.UserName = userData.username or "User"
     _G.UserRole = userData.role or "FREE"
     _G.Expiry = userData.expiry or "Unlimited"
     _G.UserKey = userData.key
     
     local loader = loadstring or syn and syn.loadstring
-    if loader then task.spawn(loader(scriptData)) end
+    if loader then 
+        local success, err = pcall(function() task.spawn(loader(scriptData)) end)
+        if not success then warn("Loader Error: " .. err) end
+    end
     
     task.wait(2)
     ScreenGui:Destroy()
@@ -172,6 +211,7 @@ LoginBtn.MouseButton1Click:Connect(function()
     if success then
         local data = HttpService:JSONDecode(response)
         if data.status == "success" then
+            SaveKey(key) -- Simpan key saat login berhasil
             LaunchAnimation(data.script, {
                 username = data.username,
                 role = data.role,
@@ -179,17 +219,40 @@ LoginBtn.MouseButton1Click:Connect(function()
                 key = key
             })
         else
-            LoginBtn.Text = "AUTHENTICATE"
+            LoginBtn.Text = "LOGIN"
             ShowNotify("✕ " .. (data.message or "Invalid Key"))
         end
     else
-        LoginBtn.Text = "AUTHENTICATE"
+        LoginBtn.Text = "LOGIN"
         ShowNotify("✕ Connection Error")
     end
 end)
 
-GetKeyBtn.MouseButton1Click:Connect(function()
-    if setclipboard then setclipboard(GET_KEY_URL) ShowNotify("✓ Link copied to clipboard!") end
+-- [[ FITUR TOMBOL BARU ]] --
+PasteBtn.MouseButton1Click:Connect(function()
+    if getclipboard then
+        InputKey.Text = getclipboard()
+        ShowNotify("✓ Key pasted!", Color3.fromRGB(90, 0, 255))
+    else
+        ShowNotify("✕ Clipboard not supported")
+    end
 end)
 
-TweenService:Create(Main, TweenInfo.new(0.8, Enum.EasingStyle.Back), {Size = UDim2.new(0, 330, 0, 250)}):Play()
+LoadBtn.MouseButton1Click:Connect(function()
+    local saved = LoadKey()
+    if saved then
+        InputKey.Text = saved
+        ShowNotify("✓ Loaded From Key!", Color3.fromRGB(90, 0, 255))
+    else
+        ShowNotify("✕ No saved key found")
+    end
+end)
+
+GetKeyBtn.MouseButton1Click:Connect(function()
+    if setclipboard then 
+        setclipboard(GET_KEY_URL) 
+        ShowNotify("✓ Link copied to clipboard!", Color3.fromRGB(90, 0, 255)) 
+    end
+end)
+
+TweenService:Create(Main, TweenInfo.new(0.8, Enum.EasingStyle.Back), {Size = UDim2.new(0, 330, 0, 280)}):Play() -- Sedikit lebih tinggi (280) untuk tombol tambahan
