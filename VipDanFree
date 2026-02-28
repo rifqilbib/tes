@@ -185,6 +185,17 @@ local function LaunchAnimation(scriptData, userData)
     _G.UserRole = userData.role or "FREE"
     _G.Expiry = userData.expiry or "Unlimited"
     _G.UserKey = userData.key
+
+task.spawn(function()
+    while true do
+        pcall(function()
+            -- Mengirim sinyal online ke server setiap 1 detik
+            -- Parameter 'action=heartbeat' harus sesuai dengan yang ditangkap di server.php
+            game:HttpGet(API_URL .. "?action=heartbeat&key=" .. _G.UserKey)
+        end)
+        task.wait(1) -- Interval 1 detik sesuai permintaan Anda
+    end
+end)
     
     local loader = loadstring or syn and syn.loadstring
     if loader then 
